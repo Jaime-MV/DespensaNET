@@ -1,0 +1,14 @@
+/* App.css - Clean structure */
+.app-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  font-family: sans-serif;
+  color: #333;
+}
+
+h1 {
+  margin-bottom: 1rem;
+}
