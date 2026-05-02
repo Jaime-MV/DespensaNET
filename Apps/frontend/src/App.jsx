@@ -1,12 +1,10 @@
 import './App.css';
+import AppRouter from './routes/AppRouter';
 
-function App() {
-  return (
-    <div className="app-container">
-      <h1>DespensaNet</h1>
-      <p>Bienvenido a la aplicación.</p>
-    </div>
-  );
+/**
+ * App — root component.
+ * Renders the router which wraps everything in <AuthProvider>.
+ */
+export default function App() {
+  return <AppRouter />;
 }
-
-export default App;
