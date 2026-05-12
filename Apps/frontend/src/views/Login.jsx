@@ -1,32 +1,26 @@
-import { useEffect } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import AuthLayout from '../layouts/AuthLayout';
 import LoginCard from '../components/LoginCard';
 
 /**
  * Login view
- * Public page. Renders AuthLayout + LoginCard.
+ * Public page. Renders LoginCard.
  * On successful login redirects to /dashboard via navigate().
  */
 export default function Login() {
   const { isAuthenticated, login } = useAuth();
   const navigate = useNavigate();
 
-  // Already authenticated → go straight to dashboard
+  // Already authenticated → go straight to the app (RoleRedirect will handle it)
   if (isAuthenticated) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to="/" replace />;
   }
 
   const handleLoginSuccess = (data) => {
     // data = { accessToken, user: { id, email, nombre, role, sucursal } }
     login(data);
-    navigate('/dashboard', { replace: true });
+    navigate('/', { replace: true });
   };
 
-  return (
-    <AuthLayout>
-      <LoginCard onLoginSuccess={handleLoginSuccess} />
-    </AuthLayout>
-  );
+  return <LoginCard onLoginSuccess={handleLoginSuccess} />;
 }

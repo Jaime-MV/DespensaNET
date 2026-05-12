@@ -1,6 +1,6 @@
 // src/modules/users/users.service.ts
 import { Injectable } from '@nestjs/common';
-import * as bcrypt from 'bcrypt';
+import { pool } from '../../config/database';
 import { Role } from '../../common/decorators/roles.decorator';
 
 export interface User {
@@ -10,43 +10,68 @@ export interface User {
   role: Role;
   nombre: string;
   sucursal: string | null;
+  idSucursal: number | null;
 }
 
-/**
- * UsersService
- * In-memory user store for development.
- * Replace with a TypeORM/Prisma repository backed by PostgreSQL
- * when the database (Render/Supabase) is configured.
- */
 @Injectable()
 export class UsersService {
-  private readonly users: User[] = [];
+  async findByEmail(email: string): Promise<User | undefined> {
+    const query = `
+      SELECT u.id_usuario as id, u.correo as email, u.contrasena_hash as "passwordHash", 
+             r.nombre as role, u.nombre, s.nombre as sucursal, u.id_sucursal as "idSucursal"
+      FROM usuario u
+      JOIN rol r ON u.id_rol = r.id_rol
+      LEFT JOIN sucursal s ON u.id_sucursal = s.id_sucursal
+      WHERE u.correo = $1 AND u.activo = TRUE
+    `;
+    const result = await pool.query(query, [email]);
+    if (!result.rows[0]) return undefined;
 
-  constructor() {
-    // Seed demo users on startup (matches frontend demo credentials)
-    void this.seedDemoUsers();
+    const row = result.rows[0];
+    const roleMapping: Record<string, Role> = {
+      'propietario': 'Propietario',
+      'encargado': 'Encargado',
+      'empleado': 'Empleado'
+    };
+
+    return {
+      id: row.id,
+      email: row.email,
+      passwordHash: row.passwordHash,
+      role: roleMapping[row.role] || 'Empleado',
+      nombre: row.nombre,
+      sucursal: row.sucursal,
+      idSucursal: row.idSucursal
+    };
   }
 
-  private async seedDemoUsers() {
-    const demos: Omit<User, 'id' | 'passwordHash'>[] = [
-      { email: 'propietario@despensanet.com', role: 'Propietario', nombre: 'Admin Propietario', sucursal: null },
-      { email: 'encargado@despensanet.com',   role: 'Encargado',   nombre: 'Juan Encargado',    sucursal: 'Sucursal Central' },
-      { email: 'empleado@despensanet.com',    role: 'Empleado',    nombre: 'María Empleada',    sucursal: 'Sucursal Norte' },
-    ];
+  async findById(id: number): Promise<User | undefined> {
+    const query = `
+      SELECT u.id_usuario as id, u.correo as email, u.contrasena_hash as "passwordHash", 
+             r.nombre as role, u.nombre, s.nombre as sucursal, u.id_sucursal as "idSucursal"
+      FROM usuario u
+      JOIN rol r ON u.id_rol = r.id_rol
+      LEFT JOIN sucursal s ON u.id_sucursal = s.id_sucursal
+      WHERE u.id_usuario = $1 AND u.activo = TRUE
+    `;
+    const result = await pool.query(query, [id]);
+    if (!result.rows[0]) return undefined;
 
-    const passwords = ['Admin2024!', 'Manager2024!', 'Staff2024!'];
+    const row = result.rows[0];
+    const roleMapping: Record<string, Role> = {
+      'propietario': 'Propietario',
+      'encargado': 'Encargado',
+      'empleado': 'Empleado'
+    };
 
-    for (let i = 0; i < demos.length; i++) {
-      const hash = await bcrypt.hash(passwords[i], 10);
-      this.users.push({ id: i + 1, ...demos[i], passwordHash: hash });
-    }
-  }
-
-  findByEmail(email: string): User | undefined {
-    return this.users.find((u) => u.email === email);
-  }
-
-  findById(id: number): User | undefined {
-    return this.users.find((u) => u.id === id);
+    return {
+      id: row.id,
+      email: row.email,
+      passwordHash: row.passwordHash,
+      role: roleMapping[row.role] || 'Empleado',
+      nombre: row.nombre,
+      sucursal: row.sucursal,
+      idSucursal: row.idSucursal
+    };
   }
 }

@@ -28,7 +28,7 @@ let JwtStrategy = class JwtStrategy extends (0, passport_1.PassportStrategy)(pas
         this.users = users;
     }
     async validate(payload) {
-        const user = this.users.findById(payload.sub);
+        const user = await this.users.findById(payload.sub);
         if (!user)
             throw new common_1.UnauthorizedException('Token inválido');
         const { passwordHash: _, ...safe } = user;

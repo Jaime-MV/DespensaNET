@@ -22,9 +22,7 @@ async function bootstrap() {
 
   // CORS — allow the Vite dev server (and future production domain)
   app.enableCors({
-    origin: [
-      config.get<string>('FRONTEND_URL', 'http://localhost:5173'),
-    ],
+    origin: true, // Allow any origin in development
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,

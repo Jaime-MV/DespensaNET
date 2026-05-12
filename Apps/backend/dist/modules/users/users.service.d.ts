@@ -6,11 +6,9 @@ export interface User {
     role: Role;
     nombre: string;
     sucursal: string | null;
+    idSucursal: number | null;
 }
 export declare class UsersService {
-    private readonly users;
-    constructor();
-    private seedDemoUsers;
-    findByEmail(email: string): User | undefined;
-    findById(id: number): User | undefined;
+    findByEmail(email: string): Promise<User | undefined>;
+    findById(id: number): Promise<User | undefined>;
 }

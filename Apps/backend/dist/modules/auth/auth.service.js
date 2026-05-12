@@ -55,7 +55,7 @@ let AuthService = class AuthService {
         this.jwt = jwt;
     }
     async login(dto) {
-        const user = this.users.findByEmail(dto.email);
+        const user = await this.users.findByEmail(dto.email);
         if (!user) {
             throw new common_1.UnauthorizedException('Credenciales incorrectas');
         }
@@ -73,11 +73,12 @@ let AuthService = class AuthService {
                 nombre: user.nombre,
                 role: user.role,
                 sucursal: user.sucursal,
+                idSucursal: user.idSucursal,
             },
         };
     }
-    getProfile(userId) {
-        const user = this.users.findById(userId);
+    async getProfile(userId) {
+        const user = await this.users.findById(userId);
         if (!user)
             throw new common_1.UnauthorizedException();
         const { passwordHash: _, ...safe } = user;

@@ -13,13 +13,15 @@ export declare class AuthService {
             nombre: string;
             role: import("../../common/decorators/roles.decorator").Role;
             sucursal: string | null;
+            idSucursal: number | null;
         };
     }>;
-    getProfile(userId: number): {
+    getProfile(userId: number): Promise<{
         id: number;
         email: string;
         role: import("../../common/decorators/roles.decorator").Role;
         nombre: string;
         sucursal: string | null;
-    };
+        idSucursal: number | null;
+    }>;
 }

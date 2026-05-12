@@ -19,6 +19,7 @@ export declare class JwtStrategy extends JwtStrategy_base {
         role: import("../../../common/decorators/roles.decorator").Role;
         nombre: string;
         sucursal: string | null;
+        idSucursal: number | null;
     }>;
 }
 export {};

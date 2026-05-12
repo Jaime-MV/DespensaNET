@@ -4,18 +4,30 @@ import ProtectedRoute from './ProtectedRoute';
 import AdminLayout from '../layouts/AdminLayout';
 import Login from '../views/Login';
 import Dashboard from '../views/Dashboard';
+import POS from '../views/POS';
 
 /**
  * AppRouter
  * Central routing configuration for DespensaNET.
  *
- * Structure:
- *   /               → redirect to /login
- *   /login          → Login page (public)
- *   /dashboard      → Protected admin shell
- *     index         → Dashboard view
- *     (future routes added here inside AdminLayout)
+ * Role-based landing:
+ *   Empleado → /ventas (POS)
+ *   Others   → /dashboard
  */
+function RoleRedirect() {
+  // Reads user from session to decide landing page
+  try {
+    const raw = sessionStorage.getItem('despensanet_session');
+    if (raw) {
+      const session = JSON.parse(raw);
+      if (session?.user?.role === 'Empleado') {
+        return <Navigate to="/ventas" replace />;
+      }
+    }
+  } catch { /* ignore */ }
+  return <Navigate to="/dashboard" replace />;
+}
+
 export default function AppRouter() {
   return (
     <BrowserRouter>
@@ -33,22 +45,24 @@ export default function AppRouter() {
               </ProtectedRoute>
             }
           >
-            {/* Default: redirect / → /dashboard */}
-            <Route index element={<Navigate to="/dashboard" replace />} />
+            {/* Default: role-based redirect */}
+            <Route index element={<RoleRedirect />} />
 
-            {/* Dashboard */}
+            {/* Dashboard (propietario/encargado) */}
             <Route path="dashboard" element={<Dashboard />} />
 
-            {/* ── Placeholder routes (add views as you build them) ── */}
-            <Route path="inventario"    element={<PlaceholderView title="Inventario"          icon="📦" />} />
-            <Route path="ventas"        element={<PlaceholderView title="Ventas / POS"         icon="💳" />} />
-            <Route path="traslados"     element={<PlaceholderView title="Traslados"            icon="🔄" />} />
-            <Route path="alertas"       element={<PlaceholderView title="Alertas"              icon="🔔" />} />
-            <Route path="reportes"      element={<PlaceholderView title="Reportes"             icon="📈" />} />
-            <Route path="sucursales"    element={<PlaceholderView title="Sucursales"           icon="🏪" />} />
-            <Route path="usuarios"      element={<PlaceholderView title="Usuarios"             icon="👥" />} />
-            <Route path="ofertas"       element={<PlaceholderView title="Ofertas"              icon="🏷️" />} />
-            <Route path="configuracion" element={<PlaceholderView title="Configuración"        icon="⚙️" />} />
+            {/* POS — primary module for empleados */}
+            <Route path="ventas" element={<POS />} />
+
+            {/* ── Placeholder routes ── */}
+            <Route path="inventario"    element={<PlaceholderView title="Inventario"     icon="📦" />} />
+            <Route path="traslados"     element={<PlaceholderView title="Traslados"      icon="🔄" />} />
+            <Route path="alertas"       element={<PlaceholderView title="Alertas"        icon="🔔" />} />
+            <Route path="reportes"      element={<PlaceholderView title="Reportes"       icon="📈" />} />
+            <Route path="sucursales"    element={<PlaceholderView title="Sucursales"     icon="🏪" />} />
+            <Route path="usuarios"      element={<PlaceholderView title="Usuarios"       icon="👥" />} />
+            <Route path="ofertas"       element={<PlaceholderView title="Ofertas"        icon="🏷️" />} />
+            <Route path="configuracion" element={<PlaceholderView title="Configuración"  icon="⚙️" />} />
           </Route>
 
           {/* 404 fallback */}
@@ -62,37 +76,16 @@ export default function AppRouter() {
 /* ─────────────────────────────────────────────────────────
    PlaceholderView
    Temporary "coming soon" screen for routes not yet built.
-   Replace each one with its real view as you develop it.
 ───────────────────────────────────────────────────────── */
 function PlaceholderView({ title, icon }) {
   return (
-    <div style={{
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      minHeight: '60vh',
-      gap: 'var(--sp-5)',
-      animation: 'pageFadeIn 0.35s ease both',
-    }}>
-      <span style={{ fontSize: '64px' }}>{icon}</span>
-      <div style={{ textAlign: 'center' }}>
-        <h2 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '8px' }}>
-          {title}
-        </h2>
-        <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-          Este módulo está en construcción. Pronto estará disponible.
-        </p>
+    <div className="flex flex-col items-center justify-center min-h-[60vh] gap-5">
+      <span className="text-6xl">{icon}</span>
+      <div className="text-center">
+        <h2 className="text-xl font-extrabold text-gray-800 mb-2">{title}</h2>
+        <p className="text-gray-400 text-sm">Este módulo está en construcción.</p>
       </div>
-      <div style={{
-        padding: '8px 18px',
-        borderRadius: 'var(--radius-full)',
-        background: 'var(--color-primary-glow)',
-        color: 'var(--color-primary-light)',
-        fontSize: '0.78rem',
-        fontWeight: 700,
-        letterSpacing: '0.5px',
-      }}>
+      <div className="px-4 py-2 rounded-full bg-indigo-100 text-indigo-600 text-xs font-bold tracking-wide">
         PRÓXIMAMENTE
       </div>
     </div>

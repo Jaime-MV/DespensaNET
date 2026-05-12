@@ -13,7 +13,7 @@ export class AuthService {
   ) {}
 
   async login(dto: LoginDto) {
-    const user = this.users.findByEmail(dto.email);
+    const user = await this.users.findByEmail(dto.email);
 
     if (!user) {
       throw new UnauthorizedException('Credenciales incorrectas');
@@ -30,18 +30,19 @@ export class AuthService {
     return {
       accessToken,
       user: {
-        id:       user.id,
-        email:    user.email,
-        nombre:   user.nombre,
-        role:     user.role,
-        sucursal: user.sucursal,
+        id:         user.id,
+        email:      user.email,
+        nombre:     user.nombre,
+        role:       user.role,
+        sucursal:   user.sucursal,
+        idSucursal: user.idSucursal,
       },
     };
   }
 
   /** Returns the authenticated user profile (used by /auth/me) */
-  getProfile(userId: number) {
-    const user = this.users.findById(userId);
+  async getProfile(userId: number) {
+    const user = await this.users.findById(userId);
     if (!user) throw new UnauthorizedException();
     const { passwordHash: _, ...safe } = user;
     return safe;

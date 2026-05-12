@@ -64,3 +64,22 @@ export const authService = {
    */
   me: () => api.get('/auth/me').then((r) => r.data),
 };
+
+/* ── Sales / POS endpoints ── */
+export const salesService = {
+  /** Search product by barcode/serial */
+  searchProduct: (code) =>
+    api.get('/sales/product', { params: { code } }).then((r) => r.data),
+
+  /** Create (finalize) a sale */
+  createSale: (payload) =>
+    api.post('/sales', payload).then((r) => r.data),
+
+  /** Get today's sales history */
+  getTodaySales: () =>
+    api.get('/sales/today').then((r) => r.data),
+
+  /** Get active offers (read-only) */
+  getActiveOffers: () =>
+    api.get('/sales/offers').then((r) => r.data),
+};
