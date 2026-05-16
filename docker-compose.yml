@@ -1,0 +1,34 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: apps/backend/Dockerfile
+    container_name: despensanet-backend
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/apps/backend/node_modules
+    environment:
+      - NODE_ENV=development
+    command: npm run dev --workspace=apps/backend
+
+  frontend:
+    build:
+      context: .
+      dockerfile: apps/frontend/Dockerfile
+    container_name: despensanet-frontend
+    ports:
+      - "5173:5173"
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/apps/frontend/node_modules
+    environment:
+      - VITE_API_URL=http://localhost:3000/api
+    command: npm run dev --workspace=apps/frontend
+    depends_on:
+      - backend
