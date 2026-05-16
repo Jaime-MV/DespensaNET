@@ -8,6 +8,7 @@ import POS from '../views/POS';
 import UsersList from '../views/Users/UsersList';
 import Inventario from '../views/Inventario';
 import OfertasBase from '../views/OfertasBase';
+import Reportes from '../views/Reportes';
 
 /**
  * AppRouter
@@ -63,7 +64,7 @@ export default function AppRouter() {
             
             <Route path="traslados"     element={<PlaceholderView title="Traslados"      icon="🔄" />} />
             <Route path="alertas"       element={<PlaceholderView title="Alertas"        icon="🔔" />} />
-            <Route path="reportes"      element={<PlaceholderView title="Reportes"       icon="📈" />} />
+            <Route path="reportes"      element={<Reportes />} />
             <Route path="sucursales"    element={<PlaceholderView title="Sucursales"     icon="🏪" />} />
             <Route path="usuarios"      element={<UsersList />} />
             <Route path="ofertas"       element={<PlaceholderView title="Ofertas"        icon="🏷️" />} />
