@@ -5,6 +5,7 @@ import AdminLayout from '../layouts/AdminLayout';
 import Login from '../views/Login';
 import Dashboard from '../views/Dashboard';
 import POS from '../views/POS';
+import UsersList from '../views/Users/UsersList';
 
 /**
  * AppRouter
@@ -60,7 +61,7 @@ export default function AppRouter() {
             <Route path="alertas"       element={<PlaceholderView title="Alertas"        icon="🔔" />} />
             <Route path="reportes"      element={<PlaceholderView title="Reportes"       icon="📈" />} />
             <Route path="sucursales"    element={<PlaceholderView title="Sucursales"     icon="🏪" />} />
-            <Route path="usuarios"      element={<PlaceholderView title="Usuarios"       icon="👥" />} />
+            <Route path="usuarios"      element={<UsersList />} />
             <Route path="ofertas"       element={<PlaceholderView title="Ofertas"        icon="🏷️" />} />
             <Route path="configuracion" element={<PlaceholderView title="Configuración"  icon="⚙️" />} />
           </Route>
