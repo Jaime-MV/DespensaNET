@@ -81,8 +81,7 @@ const NAV_ITEMS = [
     icon: icons.inventario,
     subItems: [
       { to: '/inventario', label: 'Catálogo de Productos' },
-      { to: '/inventario/descuentos', label: 'Descuentos' },
-      { to: '/inventario/promociones', label: 'Promociones' }
+      { to: '/inventario/descuentos', label: 'Descuentos' }
     ]
   },
   { to: '/traslados',   label: 'Traslados',       icon: icons.traslados },

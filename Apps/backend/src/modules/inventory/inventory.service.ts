@@ -7,7 +7,7 @@ export class InventoryService {
     // Si hay idSucursal (para encargado/empleado), mostramos el stock de su sucursal
     // Si no (para propietario), podemos mostrar el stock general o solo la lista de productos
     let query = `
-      SELECT p.id_producto, p.codigo, p.nombre, p.categoria, p.unidad_medida, p.precio_referencia, p.activo
+      SELECT p.id_producto, p.codigo, p.nombre, p.categoria, p.unidad_medida, p.precio_referencia, p.activo, p.fecha_caducidad
       FROM producto p
       ORDER BY p.nombre ASC
     `;
@@ -15,7 +15,7 @@ export class InventoryService {
 
     if (idSucursal) {
       query = `
-        SELECT p.id_producto, p.codigo, p.nombre, p.categoria, p.unidad_medida, p.precio_referencia, p.activo,
+        SELECT p.id_producto, p.codigo, p.nombre, p.categoria, p.unidad_medida, p.precio_referencia, p.activo, p.fecha_caducidad,
                COALESCE(ss.cantidad_actual, 0) as stock, COALESCE(ss.stock_minimo, 0) as stock_minimo
         FROM producto p
         LEFT JOIN stock_sucursal ss ON ss.id_producto = p.id_producto AND ss.id_sucursal = $1
@@ -29,12 +29,12 @@ export class InventoryService {
   }
 
   async createProduct(data: any) {
-    const { codigo, nombre, categoria, unidad_medida, precio_referencia } = data;
+    const { codigo, nombre, categoria, unidad_medida, precio_referencia, fecha_caducidad } = data;
     try {
       const res = await pool.query(
-        `INSERT INTO producto (codigo, nombre, categoria, unidad_medida, precio_referencia)
-         VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-        [codigo, nombre, categoria, unidad_medida, precio_referencia]
+        `INSERT INTO producto (codigo, nombre, categoria, unidad_medida, precio_referencia, fecha_caducidad)
+         VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+        [codigo, nombre, categoria, unidad_medida, precio_referencia, fecha_caducidad || null]
       );
       return res.rows[0];
     } catch (err: any) {
@@ -43,13 +43,13 @@ export class InventoryService {
   }
 
   async updateProduct(id: number, data: any) {
-    const { codigo, nombre, categoria, unidad_medida, precio_referencia, activo } = data;
+    const { codigo, nombre, categoria, unidad_medida, precio_referencia, activo, fecha_caducidad } = data;
     try {
       const res = await pool.query(
         `UPDATE producto
-         SET codigo = $1, nombre = $2, categoria = $3, unidad_medida = $4, precio_referencia = $5, activo = $6
-         WHERE id_producto = $7 RETURNING *`,
-        [codigo, nombre, categoria, unidad_medida, precio_referencia, activo, id]
+         SET codigo = $1, nombre = $2, categoria = $3, unidad_medida = $4, precio_referencia = $5, activo = $6, fecha_caducidad = $7
+         WHERE id_producto = $8 RETURNING *`,
+        [codigo, nombre, categoria, unidad_medida, precio_referencia, activo, fecha_caducidad || null, id]
       );
       return res.rows[0];
     } catch (err: any) {

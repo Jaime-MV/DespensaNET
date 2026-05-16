@@ -1,20 +1,22 @@
 import { useState, useEffect } from 'react';
 import { inventoryService } from '../services/api';
 import { useAuth } from '../hooks/useAuth';
-import { Package, Plus, Edit2, Trash2, Search, X, Check, AlertCircle } from 'lucide-react';
+import { Package, Plus, Edit2, Trash2, Search, X, Check, AlertCircle, Filter, ArrowUpDown } from 'lucide-react';
 
 export default function Inventario() {
   const { user } = useAuth();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('');
+  const [priceSort, setPriceSort] = useState('');
   
   // modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   
   const [formData, setFormData] = useState({
-    codigo: '', nombre: '', categoria: '', unidad_medida: 'unidad', precio_referencia: '', activo: true
+    codigo: '', nombre: '', categoria: '', unidad_medida: 'unidad', precio_referencia: '', activo: true, fecha_caducidad: ''
   });
   const [error, setError] = useState('');
 
@@ -45,12 +47,13 @@ export default function Inventario() {
         categoria: product.categoria || '',
         unidad_medida: product.unidad_medida || 'unidad',
         precio_referencia: product.precio_referencia,
-        activo: product.activo
+        activo: product.activo,
+        fecha_caducidad: product.fecha_caducidad ? product.fecha_caducidad.split('T')[0] : ''
       });
     } else {
       setEditingProduct(null);
       setFormData({
-        codigo: '', nombre: '', categoria: '', unidad_medida: 'unidad', precio_referencia: '', activo: true
+        codigo: '', nombre: '', categoria: '', unidad_medida: 'unidad', precio_referencia: '', activo: true, fecha_caducidad: ''
       });
     }
     setIsModalOpen(true);
@@ -87,10 +90,30 @@ export default function Inventario() {
     }
   };
 
-  const filtered = products.filter(p => 
-    p.nombre.toLowerCase().includes(search.toLowerCase()) || 
-    p.codigo.toLowerCase().includes(search.toLowerCase())
+  const uniqueCategories = [...new Set(products.map(p => p.categoria).filter(Boolean))];
+
+  let filtered = products.filter(p => 
+    (p.nombre.toLowerCase().includes(search.toLowerCase()) || 
+     p.codigo.toLowerCase().includes(search.toLowerCase())) &&
+    (categoryFilter === '' || p.categoria === categoryFilter)
   );
+
+  if (priceSort === 'asc') {
+    filtered.sort((a, b) => parseFloat(a.precio_referencia) - parseFloat(b.precio_referencia));
+  } else if (priceSort === 'desc') {
+    filtered.sort((a, b) => parseFloat(b.precio_referencia) - parseFloat(a.precio_referencia));
+  }
+
+  // Helper: expiry status  
+  const getExpiryStatus = (fecha) => {
+    if (!fecha) return null;
+    const today = new Date();
+    const exp = new Date(fecha);
+    const diffDays = Math.ceil((exp - today) / (1000 * 60 * 60 * 24));
+    if (diffDays < 0) return { label: 'Vencido', cls: 'bg-red-100 text-red-700' };
+    if (diffDays <= 30) return { label: `Vence en ${diffDays}d`, cls: 'bg-amber-100 text-amber-700' };
+    return { label: exp.toLocaleDateString('es-GT'), cls: 'bg-slate-100 text-slate-600' };
+  };
 
   return (
     <div className="p-6 lg:p-8 h-[calc(100vh-2rem)] w-full flex flex-col gap-6">
@@ -109,8 +132,8 @@ export default function Inventario() {
       </header>
 
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm flex-1 flex flex-col min-h-0">
-        <div className="p-4 border-b border-slate-100 flex gap-4 items-center bg-slate-50/50 shrink-0 rounded-t-2xl">
-          <div className="relative flex-1 max-w-md">
+        <div className="p-4 border-b border-slate-100 flex flex-wrap gap-4 items-center bg-slate-50/50 shrink-0 rounded-t-2xl">
+          <div className="relative flex-1 min-w-[250px] max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
             <input 
               type="text" 
@@ -119,6 +142,35 @@ export default function Inventario() {
               onChange={(e) => setSearch(e.target.value)}
               className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
             />
+          </div>
+          
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+              <select 
+                value={categoryFilter}
+                onChange={e => setCategoryFilter(e.target.value)}
+                className="pl-9 pr-8 py-2.5 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm appearance-none cursor-pointer text-slate-700 font-medium"
+              >
+                <option value="">Todas las categorías</option>
+                {uniqueCategories.map(cat => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
+              </select>
+            </div>
+            
+            <div className="relative">
+              <ArrowUpDown className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+              <select 
+                value={priceSort}
+                onChange={e => setPriceSort(e.target.value)}
+                className="pl-9 pr-8 py-2.5 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm appearance-none cursor-pointer text-slate-700 font-medium"
+              >
+                <option value="">Ordenar por precio</option>
+                <option value="desc">Mayor a Menor</option>
+                <option value="asc">Menor a Mayor</option>
+              </select>
+            </div>
           </div>
         </div>
 
@@ -130,6 +182,7 @@ export default function Inventario() {
                 <th className="px-6 py-4">Producto</th>
                 <th className="px-6 py-4">Categoría</th>
                 <th className="px-6 py-4 text-right">Precio Ref.</th>
+                <th className="px-6 py-4 text-center">Caducidad</th>
                 {user?.role !== 'Propietario' && <th className="px-6 py-4 text-right">Stock Local</th>}
                 <th className="px-6 py-4 text-center">Estado</th>
                 <th className="px-6 py-4 text-center">Acciones</th>
@@ -147,6 +200,14 @@ export default function Inventario() {
                     <td className="px-6 py-4 font-medium text-slate-900">{p.nombre}</td>
                     <td className="px-6 py-4 text-slate-500">{p.categoria || '—'}</td>
                     <td className="px-6 py-4 text-right font-medium">$ {parseFloat(p.precio_referencia).toFixed(2)}</td>
+                    <td className="px-6 py-4 text-center">
+                      {(() => {
+                        const status = getExpiryStatus(p.fecha_caducidad);
+                        return status ? (
+                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-[11px] font-bold ${status.cls}`}>{status.label}</span>
+                        ) : <span className="text-slate-300 text-xs">—</span>;
+                      })()}
+                    </td>
                     {user?.role !== 'Propietario' && (
                       <td className="px-6 py-4 text-right">
                         <span className={`inline-flex px-2 py-1 rounded-md text-xs font-bold tabular-nums ${p.stock <= p.stock_minimo ? 'bg-red-100 text-red-700' : 'bg-emerald-50 text-emerald-700'}`}>
@@ -240,6 +301,13 @@ export default function Inventario() {
                     <option value="lb">Libra (lb)</option>
                   </select>
                 </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-slate-500 uppercase">Fecha de Caducidad <span className="normal-case text-slate-400">(Opcional)</span></label>
+                <input type="date" value={formData.fecha_caducidad} onChange={e => setFormData({...formData, fecha_caducidad: e.target.value})} 
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm" />
+                <p className="text-[11px] text-slate-400">Los productos con caducidad próxima (menos de 30 días) aparecerán en alerta.</p>
               </div>
 
               {editingProduct && (

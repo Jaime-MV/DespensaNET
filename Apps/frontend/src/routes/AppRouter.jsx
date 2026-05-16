@@ -57,10 +57,9 @@ export default function AppRouter() {
             {/* POS — primary module for empleados */}
             <Route path="ventas" element={<POS />} />
 
-            {/* Inventario CRUD y Marketing */}
+            {/* Inventario CRUD y Descuentos */}
             <Route path="inventario" element={<Inventario />} />
             <Route path="inventario/descuentos" element={<OfertasBase tipo="descuento" />} />
-            <Route path="inventario/promociones" element={<OfertasBase tipo="promocion" />} />
             
             <Route path="traslados"     element={<PlaceholderView title="Traslados"      icon="🔄" />} />
             <Route path="alertas"       element={<PlaceholderView title="Alertas"        icon="🔔" />} />
