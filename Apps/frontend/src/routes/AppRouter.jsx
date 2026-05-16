@@ -5,6 +5,8 @@ import AdminLayout from '../layouts/AdminLayout';
 import Login from '../views/Login';
 import Dashboard from '../views/Dashboard';
 import POS from '../views/POS';
+import Inventario from '../views/Inventario';
+import OfertasBase from '../views/OfertasBase';
 
 /**
  * AppRouter
@@ -54,8 +56,11 @@ export default function AppRouter() {
             {/* POS — primary module for empleados */}
             <Route path="ventas" element={<POS />} />
 
-            {/* ── Placeholder routes ── */}
-            <Route path="inventario"    element={<PlaceholderView title="Inventario"     icon="📦" />} />
+            {/* Inventario CRUD y Marketing */}
+            <Route path="inventario" element={<Inventario />} />
+            <Route path="inventario/descuentos" element={<OfertasBase tipo="descuento" />} />
+            <Route path="inventario/promociones" element={<OfertasBase tipo="promocion" />} />
+            
             <Route path="traslados"     element={<PlaceholderView title="Traslados"      icon="🔄" />} />
             <Route path="alertas"       element={<PlaceholderView title="Alertas"        icon="🔔" />} />
             <Route path="reportes"      element={<PlaceholderView title="Reportes"       icon="📈" />} />

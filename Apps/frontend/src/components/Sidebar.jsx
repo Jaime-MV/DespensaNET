@@ -75,13 +75,82 @@ const icons = {
 /* ── Links de navegación ───────────────────────────────────────────────── */
 const NAV_ITEMS = [
   { to: '/dashboard',   label: 'Dashboard',      icon: icons.dashboard },
-  { to: '/inventario',  label: 'Inventario',      icon: icons.inventario },
+  { 
+    id: 'inventario',
+    label: 'Inventario',      
+    icon: icons.inventario,
+    subItems: [
+      { to: '/inventario', label: 'Catálogo de Productos' },
+      { to: '/inventario/descuentos', label: 'Descuentos' },
+      { to: '/inventario/promociones', label: 'Promociones' }
+    ]
+  },
   { to: '/traslados',   label: 'Traslados',       icon: icons.traslados },
   { to: '/ventas',      label: 'Punto de Venta',  icon: icons.pos },
   { to: '/alertas',     label: 'Alertas',          icon: icons.alertas },
   { to: '/reportes',    label: 'Reportes',         icon: icons.reportes },
   { to: '/usuarios',    label: 'Usuarios',         icon: icons.usuarios },
 ];
+
+/* ── Componente NavItem ────────────────────────────────────────────────── */
+function NavItem({ item, setMobileOpen }) {
+  const [open, setOpen] = useState(false);
+
+  if (item.subItems) {
+    return (
+      <div className="flex flex-col gap-1">
+        <button
+          onClick={() => setOpen(!open)}
+          className={`flex items-center justify-between px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 
+            ${open ? 'bg-white/10 text-white' : 'text-white/70 hover:bg-white/10 hover:text-white'}`}
+        >
+          <div className="flex items-center gap-3">
+            <span className="shrink-0">{item.icon}</span>
+            <span>{item.label}</span>
+          </div>
+          <svg className={`w-4 h-4 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+        {open && (
+          <div className="flex flex-col gap-1 pl-11 pr-2 pb-1">
+            {item.subItems.map(sub => (
+              <NavLink
+                key={sub.to}
+                to={sub.to}
+                onClick={() => setMobileOpen(false)}
+                className={({ isActive }) =>
+                  `block px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    isActive ? 'bg-indigo-600/50 text-white' : 'text-white/60 hover:text-white hover:bg-white/5'
+                  }`
+                }
+              >
+                {sub.label}
+              </NavLink>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <NavLink
+      to={item.to}
+      onClick={() => setMobileOpen(false)}
+      className={({ isActive }) =>
+        `flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${
+          isActive
+            ? 'bg-white/20 text-white shadow-sm backdrop-blur-sm'
+            : 'text-white/70 hover:bg-white/10 hover:text-white'
+        }`
+      }
+    >
+      <span className="shrink-0">{item.icon}</span>
+      <span>{item.label}</span>
+    </NavLink>
+  );
+}
 
 /* ── Componente Sidebar ────────────────────────────────────────────────── */
 export default function Sidebar() {
@@ -110,23 +179,9 @@ export default function Sidebar() {
       </div>
 
       {/* ── Navegación ── */}
-      <nav className="flex-1 px-3 mt-2 flex flex-col gap-1">
+      <nav className="flex-1 px-3 mt-2 flex flex-col gap-1 overflow-y-auto">
         {NAV_ITEMS.map((item) => (
-          <NavLink
-            key={item.to}
-            to={item.to}
-            onClick={() => setMobileOpen(false)}
-            className={({ isActive }) =>
-              `flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${
-                isActive
-                  ? 'bg-white/20 text-white shadow-sm backdrop-blur-sm'
-                  : 'text-white/70 hover:bg-white/10 hover:text-white'
-              }`
-            }
-          >
-            <span className="shrink-0">{item.icon}</span>
-            <span>{item.label}</span>
-          </NavLink>
+          <NavItem key={item.to || item.id} item={item} setMobileOpen={setMobileOpen} />
         ))}
       </nav>
 
