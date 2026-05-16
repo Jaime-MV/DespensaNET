@@ -24,6 +24,98 @@ const HighlightMatch = ({ text, search }) => {
   );
 };
 
+// ── PDF Invoice Generator ──────────────────────────────────────────────────
+async function generateInvoicePDF(saleData, items, user) {
+  const { default: jsPDF } = await import('jspdf');
+  const { default: autoTable } = await import('jspdf-autotable');
+
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  
+  // Header: Company Info
+  doc.setFontSize(20);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(79, 70, 229); // Indigo 600
+  doc.text('DespensaNET', 14, 20);
+  
+  doc.setFontSize(10);
+  doc.setTextColor(100, 100, 100);
+  doc.setFont('helvetica', 'normal');
+  doc.text('Distribuidora de Alimentos S.A.', 14, 26);
+  doc.text('NIT: 1234567-8', 14, 31);
+  doc.text(`Sucursal: ${user?.sucursal || 'Central'}`, 14, 36);
+  doc.text('Tel: +502 2222-3333', 14, 41);
+
+  // Invoice Details
+  doc.setFontSize(14);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(0, 0, 0);
+  doc.text('FACTURA', 150, 20);
+  
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`No. de Venta: #${String(saleData.idVenta).padStart(6, '0')}`, 150, 26);
+  doc.text(`Fecha: ${new Date().toLocaleString('es-GT')}`, 150, 31);
+  doc.text(`Vendedor: ${user?.nombre || user?.email}`, 150, 36);
+  doc.text(`Método: ${saleData.payMethod.toUpperCase()}`, 150, 41);
+
+  // Customer Info (Standard)
+  doc.setDrawColor(200, 200, 200);
+  doc.line(14, 48, 196, 48);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Cliente: ', 14, 55);
+  doc.setFont('helvetica', 'normal');
+  doc.text('Consumidor Final', 30, 55);
+  doc.setFont('helvetica', 'bold');
+  doc.text('NIT/CF: ', 150, 55);
+  doc.setFont('helvetica', 'normal');
+  doc.text('C/F', 165, 55);
+  doc.line(14, 60, 196, 60);
+
+  // Items Table
+  autoTable(doc, {
+    startY: 65,
+    head: [['Cant.', 'Descripción', 'Precio Uni.', 'Subtotal']],
+    body: items.map(i => [
+      i.cantidad,
+      `${i.codigo} - ${i.nombre}`,
+      `$ ${i.precioUnitario.toFixed(2)}`,
+      `$ ${i.subtotal.toFixed(2)}`
+    ]),
+    styles: { fontSize: 9, cellPadding: 3 },
+    headStyles: { fillColor: [79, 70, 229], textColor: 255, fontStyle: 'bold' },
+    columnStyles: {
+      0: { halign: 'center', cellWidth: 20 },
+      1: { cellWidth: 'auto' },
+      2: { halign: 'right', cellWidth: 35 },
+      3: { halign: 'right', cellWidth: 35 },
+    },
+    alternateRowStyles: { fillColor: [248, 248, 255] },
+  });
+
+  // Totals
+  const finalY = doc.lastAutoTable.finalY + 10;
+  doc.setFontSize(10);
+  
+  if (saleData.totalDiscount > 0) {
+    doc.text('Descuentos aplicados:', 130, finalY);
+    doc.text(`-$ ${saleData.totalDiscount.toFixed(2)}`, 180, finalY, { align: 'right' });
+  }
+
+  doc.setFontSize(14);
+  doc.setFont('helvetica', 'bold');
+  doc.text('TOTAL:', 130, finalY + 8);
+  doc.text(`$ ${parseFloat(saleData.total).toFixed(2)}`, 180, finalY + 8, { align: 'right' });
+
+  // Footer Disclaimer
+  doc.setFontSize(8);
+  doc.setFont('helvetica', 'italic');
+  doc.setTextColor(150, 150, 150);
+  doc.text('Sujeto a pagos trimestrales ISR.', 105, 275, { align: 'center' });
+  doc.text('Este documento es una representación impresa de una factura generada en DespensaNET.', 105, 280, { align: 'center' });
+
+  doc.save(`factura_venta_${saleData.idVenta}.pdf`);
+}
+
 const TABS = [
   { id: 'pos', label: 'Punto de Venta', icon: ShoppingCart },
   { id: 'historial', label: 'Historial', icon: History },
@@ -83,6 +175,7 @@ export default function POS() {
    TAB 1 — Punto de Venta
    ────────────────────────────────────────── */
 function TabPOS() {
+  const { user } = useAuth();
   const [items, setItems] = useState([]);
   const [searchCode, setSearchCode] = useState('');
   const [searching, setSearching] = useState(false);
@@ -94,6 +187,7 @@ function TabPOS() {
   const inputRef = useRef(null);
 
   const [searchResults, setSearchResults] = useState(null);
+  const showReceiptRef = useRef({ items: [] });
 
   useEffect(() => { inputRef.current?.focus(); }, []);
 
@@ -202,7 +296,9 @@ function TabPOS() {
           subtotal: i.subtotal,
         })),
       });
-      setShowReceipt({ ...result, change, payMethod });
+      setShowReceipt({ ...result, change, payMethod, total, totalDiscount });
+      // Guardar el carrito en el recibo antes de limpiarlo
+      showReceiptRef.current = { items: [...items] };
       setItems([]); setCashGiven('');
     } catch (err) {
       setSearchError(err?.response?.data?.message ?? 'Error al procesar venta');
@@ -405,10 +501,23 @@ function TabPOS() {
                 <div className="flex justify-between text-green-600"><span>Cambio entregado</span><span className="font-bold">$ {showReceipt.change.toFixed(2)}</span></div>
               )}
             </div>
-            <button onClick={() => setShowReceipt(null)}
-              className="w-full py-3 bg-indigo-600 text-white rounded-xl font-medium hover:bg-indigo-700 transition-colors">
-              Nueva Venta
-            </button>
+            <div className="flex gap-2">
+              <button onClick={async () => {
+                try {
+                  await generateInvoicePDF(showReceipt, showReceiptRef.current.items, user);
+                } catch (err) {
+                  alert("Error al generar factura: " + err.message);
+                  console.error(err);
+                }
+              }}
+                className="w-1/2 py-3 border border-indigo-600 text-indigo-600 bg-white rounded-xl font-medium hover:bg-indigo-50 transition-colors">
+                Descargar Factura
+              </button>
+              <button onClick={() => setShowReceipt(null)}
+                className="w-1/2 py-3 bg-indigo-600 text-white rounded-xl font-medium hover:bg-indigo-700 transition-colors">
+                Nueva Venta
+              </button>
+            </div>
           </div>
         </div>
       )}

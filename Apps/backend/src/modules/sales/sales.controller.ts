@@ -36,7 +36,7 @@ export class SalesController {
   @Post()
   async createSale(@Body() body: any, @Req() req: any) {
     const result = await this.salesService.createSale({
-      idSucursal: req.user.idSucursal,
+      idSucursal: req.user.idSucursal || 1,
       idUsuario: req.user.id,
       metodoPago: body.metodoPago,
       items: body.items,
