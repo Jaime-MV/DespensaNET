@@ -5,9 +5,8 @@ WORKDIR /app
 COPY package*.json ./
 # Copy workspace definitions
 COPY turbo.json ./
-# Copy apps and packages
-COPY apps/backend ./apps/backend
-COPY packages ./packages
+# Copy apps
+COPY Apps/backend ./apps/backend
 
 # Install dependencies (this will install for the whole monorepo)
 RUN npm install

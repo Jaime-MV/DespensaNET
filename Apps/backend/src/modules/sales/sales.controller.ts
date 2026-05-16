@@ -22,10 +22,11 @@ export class SalesController {
    * Requires the user's branch (from JWT payload).
    */
   @Get('product')
-  async searchProduct(@Query('code') code: string, @Req() req: any) {
+  async searchProduct(@Query('q') q: string, @Query('code') code: string, @Req() req: any) {
     const idSucursal = req.user.idSucursal;
-    const product = await this.salesService.searchProductByCode(code, idSucursal);
-    return { product };
+    const searchTerm = q || code || '';
+    const products = await this.salesService.searchProducts(searchTerm, idSucursal);
+    return { products };
   }
 
   /**

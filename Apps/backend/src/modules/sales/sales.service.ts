@@ -8,7 +8,7 @@ export class SalesService {
    * Search products by code (serial) for the POS scanner.
    * Also checks stock in the user's branch and any active offers.
    */
-  async searchProductByCode(code: string, idSucursal: number) {
+  async searchProducts(searchTerm: string, idSucursal: number) {
     const query = `
       SELECT
         p.id_producto,
@@ -29,11 +29,12 @@ export class SalesService {
         AND o.activa = TRUE
         AND NOW() BETWEEN o.fecha_inicio AND o.fecha_fin
         AND (o.id_sucursal IS NULL OR o.id_sucursal = $2)
-      WHERE p.codigo = $1 AND p.activo = TRUE
-      LIMIT 1
+      WHERE (p.codigo = $1 OR p.nombre ILIKE $3) AND p.activo = TRUE
+      ORDER BY p.nombre ASC
+      LIMIT 20
     `;
-    const result = await pool.query(query, [code, idSucursal]);
-    return result.rows[0] ?? null;
+    const result = await pool.query(query, [searchTerm, idSucursal, `%${searchTerm}%`]);
+    return result.rows;
   }
 
   /**

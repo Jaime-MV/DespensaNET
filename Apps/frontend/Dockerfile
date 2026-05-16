@@ -5,9 +5,8 @@ WORKDIR /app
 COPY package*.json ./
 # Copy workspace definitions
 COPY turbo.json ./
-# Copy apps and packages
-COPY apps/frontend ./apps/frontend
-COPY packages ./packages
+# Copy apps
+COPY Apps/frontend ./apps/frontend
 
 # Install dependencies
 RUN npm install

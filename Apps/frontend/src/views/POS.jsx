@@ -8,6 +8,22 @@ import { Search, Trash2, ShoppingCart, History, Tag, CreditCard, Banknote, X, Ch
    Tabs: Punto de Venta | Historial | Ofertas
    ════════════════════════════════════════════════════════════ */
 
+const HighlightMatch = ({ text, search }) => {
+  if (!search) return <>{text}</>;
+  const parts = String(text).split(new RegExp(`(${search})`, 'gi'));
+  return (
+    <>
+      {parts.map((part, i) =>
+        part.toLowerCase() === search.toLowerCase() ? (
+          <span key={i} className="bg-yellow-200 text-yellow-900 font-extrabold px-0.5 rounded">{part}</span>
+        ) : (
+          <span key={i}>{part}</span>
+        )
+      )}
+    </>
+  );
+};
+
 const TABS = [
   { id: 'pos', label: 'Punto de Venta', icon: ShoppingCart },
   { id: 'historial', label: 'Historial', icon: History },
@@ -77,6 +93,8 @@ function TabPOS() {
   const [processing, setProcessing] = useState(false);
   const inputRef = useRef(null);
 
+  const [searchResults, setSearchResults] = useState(null);
+
   useEffect(() => { inputRef.current?.focus(); }, []);
 
   const subtotal = items.reduce((s, i) => s + i.precioOriginal * i.cantidad, 0);
@@ -84,7 +102,59 @@ function TabPOS() {
   const total = subtotal - totalDiscount;
   const change = payMethod === 'efectivo' ? Math.max(0, parseFloat(cashGiven || 0) - total) : 0;
 
-  /* Search product by code */
+  const addProductToCart = (product) => {
+    const existing = items.find(i => i.idProducto === product.id_producto);
+    if (existing) {
+      setItems(prev => prev.map(i =>
+        i.idProducto === product.id_producto
+          ? { ...i, cantidad: i.cantidad + 1, subtotal: (i.cantidad + 1) * i.precioUnitario }
+          : i
+      ));
+    } else {
+      const precio = product.precio_oferta ?? product.precio_referencia;
+      setItems(prev => [...prev, {
+        idProducto: product.id_producto,
+        codigo: product.codigo,
+        nombre: product.nombre,
+        cantidad: 1,
+        precioOriginal: parseFloat(product.precio_referencia),
+        precioUnitario: parseFloat(precio),
+        idOferta: product.id_oferta ?? null,
+        subtotal: parseFloat(precio),
+        stock: parseInt(product.stock, 10),
+      }]);
+    }
+    setSearchCode('');
+    setSearchResults(null);
+    setTimeout(() => inputRef.current?.focus(), 100);
+  };
+  /* Real-time search effect */
+  useEffect(() => {
+    const code = searchCode.trim();
+    if (!code || code.length < 2) {
+      setSearchResults(null);
+      return;
+    }
+    
+    const timeoutId = setTimeout(async () => {
+      try {
+        const { products } = await salesService.searchProduct(code);
+        if (products && products.length > 0) {
+          // Si hay exactamente un match de código, NO mostramos el autocomplete (probablemente escáner rápido)
+          // El handleSearch lo procesará.
+          setSearchResults(products);
+        } else {
+          setSearchResults(null);
+        }
+      } catch {
+        setSearchResults(null);
+      }
+    }, 300);
+
+    return () => clearTimeout(timeoutId);
+  }, [searchCode]);
+
+  /* Submit handler (scanner or manual Enter) */
   const handleSearch = useCallback(async (e) => {
     e?.preventDefault();
     const code = searchCode.trim();
@@ -92,32 +162,13 @@ function TabPOS() {
     setSearchError('');
     setSearching(true);
     try {
-      const { product } = await salesService.searchProduct(code);
-      if (!product) { setSearchError('Producto no encontrado'); return; }
-      const existing = items.find(i => i.idProducto === product.id_producto);
-      if (existing) {
-        setItems(prev => prev.map(i =>
-          i.idProducto === product.id_producto
-            ? { ...i, cantidad: i.cantidad + 1, subtotal: (i.cantidad + 1) * i.precioUnitario }
-            : i
-        ));
-      } else {
-        const precio = product.precio_oferta ?? product.precio_referencia;
-        setItems(prev => [...prev, {
-          idProducto: product.id_producto,
-          codigo: product.codigo,
-          nombre: product.nombre,
-          cantidad: 1,
-          precioOriginal: parseFloat(product.precio_referencia),
-          precioUnitario: parseFloat(precio),
-          idOferta: product.id_oferta ?? null,
-          subtotal: parseFloat(precio),
-          stock: parseInt(product.stock, 10),
-        }]);
-      }
-      setSearchCode('');
+      const { products } = await salesService.searchProduct(code);
+      if (!products || products.length === 0) { setSearchError('Producto no encontrado'); return; }
+      
+      const exactMatch = products.find(p => p.codigo === code);
+      addProductToCart(exactMatch || products[0]);
     } catch { setSearchError('Error al buscar producto'); }
-    finally { setSearching(false); inputRef.current?.focus(); }
+    finally { setSearching(false); }
   }, [searchCode, items]);
 
   const updateQty = (idx, delta) => {
@@ -167,8 +218,36 @@ function TabPOS() {
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
             <input ref={inputRef} value={searchCode} onChange={e => setSearchCode(e.target.value)}
-              placeholder="Escanear o buscar código de producto..."
+              placeholder="Escanear o buscar código o nombre de producto..."
               className="w-full pl-10 pr-4 py-3 bg-white border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm" />
+            
+            {/* ── Autocomplete Dropdown ── */}
+            {searchResults && (
+              <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-xl border border-gray-200 z-50 max-h-80 overflow-y-auto">
+                <div className="p-2 grid gap-1">
+                  {searchResults.map(p => {
+                    const precio = p.precio_oferta ?? p.precio_referencia;
+                    return (
+                      <div key={p.id_producto} onClick={() => addProductToCart(p)}
+                        className="flex items-center justify-between p-3 hover:bg-indigo-50 rounded-lg cursor-pointer transition-colors border border-transparent hover:border-indigo-100">
+                        <div>
+                          <p className="font-bold text-gray-900 text-sm">
+                            <HighlightMatch text={p.nombre} search={searchCode} />
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            Cód: <HighlightMatch text={p.codigo} search={searchCode} /> • Stock: {p.stock} {p.unidad_medida}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-bold text-indigo-600">$ {parseFloat(precio).toFixed(2)}</p>
+                          {p.id_oferta && <p className="text-[10px] bg-green-100 text-green-700 px-1.5 rounded-sm inline-block mt-0.5">Oferta</p>}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
           <button type="submit" disabled={searching}
             className="bg-indigo-600 text-white px-5 py-3 rounded-xl font-medium hover:bg-indigo-700 transition-colors disabled:opacity-60 text-sm">
