@@ -8,6 +8,7 @@ import POS from '../views/POS';
 import UsersList from '../views/Users/UsersList';
 import Inventario from '../views/Inventario';
 import OfertasBase from '../views/OfertasBase';
+import TrasladosView from '../views/Traslados/TrasladosView';
 
 /**
  * AppRouter
@@ -62,7 +63,11 @@ export default function AppRouter() {
             <Route path="inventario/descuentos" element={<OfertasBase tipo="descuento" />} />
             <Route path="inventario/promociones" element={<OfertasBase tipo="promocion" />} />
             
-            <Route path="traslados"     element={<PlaceholderView title="Traslados"      icon="🔄" />} />
+            <Route path="traslados" element={
+              <ProtectedRoute allowedRoles={['Encargado', 'Propietario']}>
+                <TrasladosView />
+              </ProtectedRoute>
+            } />
             <Route path="alertas"       element={<PlaceholderView title="Alertas"        icon="🔔" />} />
             <Route path="reportes"      element={<PlaceholderView title="Reportes"       icon="📈" />} />
             <Route path="sucursales"    element={<PlaceholderView title="Sucursales"     icon="🏪" />} />
