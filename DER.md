@@ -105,7 +105,8 @@ CREATE TABLE producto (
     categoria           VARCHAR(100),
     unidad_medida       VARCHAR(30),    -- ej: 'unidad', 'kg', 'litro'
     precio_referencia   NUMERIC(10,2)   CHECK (precio_referencia >= 0),
-    activo              BOOLEAN         NOT NULL DEFAULT TRUE
+    activo              BOOLEAN         NOT NULL DEFAULT TRUE,
+    fecha_caducidad     DATE
 );
 
 -- =============================================================
@@ -303,6 +304,27 @@ CREATE TABLE reporte (
     formato             VARCHAR(10)     NOT NULL CHECK (formato IN ('PDF', 'CSV'))
 );
 
+-- =============================================================
+-- 16. ALERTA_CADUCIDAD
+-- =============================================================
+CREATE TABLE alerta_caducidad (
+    id_alerta_caducidad SERIAL          PRIMARY KEY,
+    id_producto         INT             NOT NULL REFERENCES producto(id_producto),
+    id_sucursal         INT             NOT NULL REFERENCES sucursal(id_sucursal),
+    fecha_referencia    DATE            NOT NULL, -- La fecha de caducidad al momento de generar la alerta
+    dias_restantes      INT             NOT NULL, -- Cuántos días faltaban al crear la alerta
+    estado              VARCHAR(30)     NOT NULL DEFAULT 'por_vencer'
+                                        CHECK (estado IN ('por_vencer', 'vencido', 'retirado')),
+    fecha_generada      TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+    resuelta            BOOLEAN         NOT NULL DEFAULT FALSE
+);
+
+-- Índices para optimizar las consultas de reportes y dashboard
+CREATE INDEX idx_alerta_caducidad_producto ON alerta_caducidad(id_producto);
+CREATE INDEX idx_alerta_caducidad_sucursal ON alerta_caducidad(id_sucursal);
+CREATE INDEX idx_alerta_caducidad_resuelta ON alerta_caducidad(resuelta);
+CREATE INDEX idx_alerta_caducidad_estado   ON alerta_caducidad(estado);
+
 CREATE INDEX idx_reporte_usuario ON reporte(id_usuario);
 CREATE INDEX idx_reporte_tipo    ON reporte(tipo);
 
@@ -319,3 +341,5 @@ COMMENT ON COLUMN entrada_inventario.id_traslado  IS 'Vincula la entrada al tras
 COMMENT ON COLUMN alerta_stock.cantidad_al_momento IS 'Stock real cuando se generó la alerta, para auditoría histórica';
 COMMENT ON COLUMN alerta_stock.umbral_referencia   IS 'stock_minimo vigente cuando se generó la alerta';
 COMMENT ON COLUMN reporte.periodo               IS 'Formato libre según tipo: YYYY-MM, YYYY-Www, YYYY-MM-DD';
+COMMENT ON COLUMN alerta_caducidad.fecha_referencia IS 'Captura la fecha de caducidad del producto cuando se disparó la alerta';
+COMMENT ON COLUMN alerta_caducidad.estado           IS 'Permite gestionar el ciclo de vida del producto próximo a vencer';

@@ -83,3 +83,18 @@ export const salesService = {
   getActiveOffers: () =>
     api.get('/sales/offers').then((r) => r.data),
 };
+
+/* ── Inventory endpoints ── */
+export const inventoryService = {
+  getProducts: () => api.get('/inventory').then((r) => r.data),
+  createProduct: (data) => api.post('/inventory', data).then((r) => r.data),
+  updateProduct: (id, data) => api.put(`/inventory/${id}`, data).then((r) => r.data),
+  deleteProduct: (id) => api.delete(`/inventory/${id}`).then((r) => r.data),
+  updateStock: (id, data) => api.put(`/inventory/${id}/stock`, data).then((r) => r.data),
+  
+  // Offers
+  getOffers: (tipo) => api.get(`/inventory/offers${tipo ? `?tipo=${tipo}` : ''}`).then((r) => r.data),
+  createOffer: (data) => api.post('/inventory/offers', data).then((r) => r.data),
+  updateOffer: (id, data) => api.put(`/inventory/offers/${id}`, data).then((r) => r.data),
+  deleteOffer: (id) => api.delete(`/inventory/offers/${id}`).then((r) => r.data),
+};
