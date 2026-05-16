@@ -283,7 +283,7 @@ function TabPOS() {
               {parseFloat(cashGiven || 0) >= total && total > 0 && (
                 <div className="bg-green-50 border border-green-200 rounded-xl p-3 text-center">
                   <p className="text-xs text-green-600 font-medium">Cambio / Vuelto</p>
-                  <p className="text-2xl font-extrabold text-green-700">Q {change.toFixed(2)}</p>
+                  <p className="text-2xl font-extrabold text-green-700">$ {change.toFixed(2)}</p>
                 </div>
               )}
             </div>
@@ -320,10 +320,10 @@ function TabPOS() {
             <h3 className="text-xl font-bold text-gray-900 mb-1">¡Venta exitosa!</h3>
             <p className="text-gray-500 text-sm mb-4">Venta #{showReceipt.idVenta}</p>
             <div className="bg-gray-50 rounded-xl p-4 space-y-2 text-sm mb-4">
-              <div className="flex justify-between"><span className="text-gray-500">Total cobrado</span><span className="font-bold">Q {parseFloat(showReceipt.total).toFixed(2)}</span></div>
+              <div className="flex justify-between"><span className="text-gray-500">Total cobrado</span><span className="font-bold">$ {parseFloat(showReceipt.total).toFixed(2)}</span></div>
               <div className="flex justify-between"><span className="text-gray-500">Método</span><span className="font-medium capitalize">{showReceipt.payMethod}</span></div>
               {showReceipt.payMethod === 'efectivo' && (
-                <div className="flex justify-between text-green-600"><span>Cambio entregado</span><span className="font-bold">Q {showReceipt.change.toFixed(2)}</span></div>
+                <div className="flex justify-between text-green-600"><span>Cambio entregado</span><span className="font-bold">$ {showReceipt.change.toFixed(2)}</span></div>
               )}
             </div>
             <button onClick={() => setShowReceipt(null)}
@@ -358,7 +358,7 @@ function TabHistorial() {
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-bold text-gray-900">Ventas de hoy</h2>
         <div className="bg-indigo-50 text-indigo-700 font-bold px-4 py-2 rounded-xl text-sm">
-          Total del día: Q {totalDay.toFixed(2)}
+          Total del día: $ {totalDay.toFixed(2)}
         </div>
       </div>
 
@@ -395,7 +395,7 @@ function TabHistorial() {
                       {s.metodo_pago === 'efectivo' ? 'Efectivo' : 'Tarjeta'}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-right font-bold text-gray-900">Q {parseFloat(s.total).toFixed(2)}</td>
+                  <td className="px-4 py-3 text-right font-bold text-gray-900">$ {parseFloat(s.total).toFixed(2)}</td>
                 </tr>
               ))}
             </tbody>
