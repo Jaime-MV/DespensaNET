@@ -97,4 +97,13 @@ export const inventoryService = {
   createOffer: (data) => api.post('/inventory/offers', data).then((r) => r.data),
   updateOffer: (id, data) => api.put(`/inventory/offers/${id}`, data).then((r) => r.data),
   deleteOffer: (id) => api.delete(`/inventory/offers/${id}`).then((r) => r.data),
+
+  // Alerts
+  getAlerts: () => api.get('/inventory/alerts').then((r) => r.data),
+  resolveAlert: (id) => api.put(`/inventory/alerts/${id}/resolve`).then((r) => r.data),
+  getExpiryAlerts: () => api.get('/inventory/alerts/expiry').then((r) => r.data),
+  resolveExpiryAlert: (id) => api.put(`/inventory/alerts/expiry/${id}/resolve`).then((r) => r.data),
+
+  // Sucursales (reutiliza endpoint de reports)
+  getSucursales: () => api.get('/reports/sucursales').then((r) => r.data),
 };

@@ -35,8 +35,8 @@ export class InventoryController {
 
   @Put(':id/stock')
   async updateStock(@Param('id') id: string, @Body() body: any, @Req() req: any) {
-    const idSucursal = req.user.idSucursal;
-    if (!idSucursal) throw new Error('El propietario no puede modificar stock directamente sin especificar sucursal.');
+    const idSucursal = req.user.idSucursal || body.id_sucursal;
+    if (!idSucursal) throw new Error('Debe especificar una sucursal para modificar stock.');
     const stock = await this.inventoryService.updateStock(parseInt(id), idSucursal, body.cantidad, body.stock_minimo);
     return { stock };
   }
@@ -65,5 +65,32 @@ export class InventoryController {
   async deleteOffer(@Param('id') id: string) {
     const offer = await this.inventoryService.deleteOffer(parseInt(id));
     return { offer };
+  }
+
+  // ── ALERTS ──
+  @Get('alerts')
+  async getAlerts(@Req() req: any) {
+    const idSucursal = req.user.idSucursal;
+    const alerts = await this.inventoryService.getAlerts(idSucursal);
+    return { alerts };
+  }
+
+  @Put('alerts/:id/resolve')
+  async resolveAlert(@Param('id') id: string) {
+    const alert = await this.inventoryService.resolveAlert(parseInt(id));
+    return { alert };
+  }
+
+  @Get('alerts/expiry')
+  async getExpiryAlerts(@Req() req: any) {
+    const idSucursal = req.user.idSucursal;
+    const alerts = await this.inventoryService.getExpiryAlerts(idSucursal);
+    return { alerts };
+  }
+
+  @Put('alerts/expiry/:id/resolve')
+  async resolveExpiryAlert(@Param('id') id: string) {
+    const alert = await this.inventoryService.resolveExpiryAlert(parseInt(id));
+    return { alert };
   }
 }
